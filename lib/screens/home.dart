@@ -1,13 +1,11 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:food/api_maneger/api.dart';
-import 'package:food/model/testla.dart';
-import 'package:food/widget/custom_theme.dart';
+
+import '../api_maneger/api.dart';
+import '../model/testla.dart';
+import '../widget/custom_theme.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({
-    Key? key,
-  }) : super(key: key);
+  const HomePage({Key? key}) : super(key: key);
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -18,8 +16,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
-    _newTestla = API_Maneger().getNews() as Future<Testla>?;
     super.initState();
+    _newTestla = API_Maneger().getNews();
   }
 
   @override
@@ -28,29 +26,21 @@ class _HomePageState extends State<HomePage> {
       child: Scaffold(
         body: FutureBuilder<Testla>(
           future: _newTestla,
-          builder: (context, AsyncSnapshot<Testla> snapshot) {
-            if (snapshot.hasData) {
-              const CircularProgressIndicator();
-              final testlaData = snapshot.data?.articles ?? [];
-              /*return  Center(
-                child: Container(
-                  child: Image.network("${snapshot.data!.articles![0].urlToImage}",fit: BoxFit.fill,),
-                ),
-              );*/
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text("Error: ${snapshot.error}"));
+            } else if (snapshot.hasData) {
+              final articles = snapshot.data!.articles ?? [];
               return ListView.separated(
-                itemCount: snapshot.data!.articles!.length,
-                itemBuilder: (context, index) {
-                  final newTestlaData = snapshot.data!;
-                  return buildCard(newTestlaData, index);
-                },
-                separatorBuilder: (context, index) {
-                  return const SizedBox(width: 16);
-                },
+                padding: const EdgeInsets.all(10),
+                itemCount: articles.length,
+                separatorBuilder: (context, index) => const SizedBox(height: 16),
+                itemBuilder: (context, index) => buildCard(articles[index]),
               );
             } else {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
+              return const Center(child: Text("No data available."));
             }
           },
         ),
@@ -58,109 +48,113 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget buildCard(Testla newTestlaData, int index) {
-    if (newTestlaData.articles!.isNotEmpty) {
-      return SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Container(
-            height: MediaQuery.of(context).size.height * 0.8,
-            width: MediaQuery.of(context).size.width * 3,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+  Widget buildCard(Article article) {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            article.urlToImage != null
+                ? ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.network(
+                article.urlToImage!,
+                height: 200,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
+            )
+                : Container(
+              height: 200,
+              width: double.infinity,
+              color: Colors.grey[300],
+              child: const Center(
+                child: Text(
+                  "Image not found",
+                  style: TextStyle(color: Colors.red, fontSize: 18),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              article.title ?? "No Title",
+              style: UiTheme.lightTextTheme.headlineSmall,
+            ),
+            const SizedBox(height: 8),
+            Row(
               children: [
-                newTestlaData.articles![index].urlToImage != null
-                    ? Image.network(
-                        "${newTestlaData.articles![index].urlToImage}")
-                    : Container(
-                  height: MediaQuery.of(context).size.height * 0.35,
-                  width: MediaQuery.of(context).size.height * 3,
-                        color: Colors.white,
-                        child:const Center(
-                          child: Text(
-                            "Image not found",
-                            style: TextStyle(
-                              color: Colors.red,
-                              fontSize: 20,
-                            ),
-                          ),
-                        ),
-                      ),
-                const SizedBox(height: 10),
-                Text(
-                  "${newTestlaData.articles![index].title}",
-                  style: UiTheme.lightTextTheme.headline5,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Text("Where we found : ",
-                        style: UiTheme.darkTextTheme.headline3),
-                    Text("${newTestlaData.articles![index].source!.name}",
-                        style: const TextStyle(
-                          fontSize: 21,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.pink,
-                        )),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(children: [
-                  Text("Author Name  : ",
-                      style: UiTheme.darkTextTheme.headline3),
-                  Text(
-                    "${newTestlaData.articles![index].author}",
+                Text("Source: ", style: UiTheme.darkTextTheme.displaySmall),
+                Expanded(
+                  child: Text(
+                    article.source?.name ?? "Unknown",
                     style: const TextStyle(
-                      fontSize: 21,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.greenAccent,
+                      color: Colors.pink,
                     ),
                   ),
-                ]),
-                const SizedBox(height: 4),
-                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text("Description  : ",
-                      style: UiTheme.darkTextTheme.headline3),
-                  Expanded(
-                    child: Text(
-                      "${newTestlaData.articles![index].description}",
-                      maxLines: 5,
-                      style: const TextStyle(
-                        fontSize: 21,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.amberAccent,
-                      ),
-                    ),
-                  ),
-                ]),
-                const SizedBox(height: 4),
-                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text("Content  : ", style: UiTheme.darkTextTheme.headline3),
-                  Expanded(
-                    child: Text(
-                      "${newTestlaData.articles![index].content}",
-                      maxLines: 12,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blue,
-                      ),
-                    ),
-                  ),
-                ]),
-                const SizedBox(height: 20),
-                const Divider(
-                  thickness: 2,
-                  color: Colors.white,
-                )
+                ),
               ],
             ),
-          ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Text("Author: ", style: UiTheme.darkTextTheme.displaySmall),
+                Expanded(
+                  child: Text(
+                    article.author ?? "Unknown",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Description: ", style: UiTheme.darkTextTheme.displaySmall),
+                Expanded(
+                  child: Text(
+                    article.description ?? "N/A",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amberAccent,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Content: ", style: UiTheme.darkTextTheme.displaySmall),
+                Expanded(
+                  child: Text(
+                    article.content ?? "N/A",
+                    maxLines: 5,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
         ),
-      );
-    } else {
-      throw Exception('This card doesn\'t exist yet');
-    }
+      ),
+    );
   }
 }

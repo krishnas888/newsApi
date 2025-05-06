@@ -1,9 +1,9 @@
 
 import 'dart:convert';
-
-import 'package:food/api_maneger/stream.dart';
-import 'package:food/model/testla.dart';
 import 'package:http/http.dart' as http;
+import 'package:newsapi/api_maneger/stream.dart';
+
+import '../model/testla.dart';
 class API_Maneger{
   Future<Testla>? getNews() async {
     var client = http.Client();

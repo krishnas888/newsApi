@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:food/screens/home.dart';
-import 'package:food/widget/custom_theme.dart';
+import 'package:newsapi/screens/home.dart';
+import 'package:newsapi/widget/custom_theme.dart';
 void main() {
-  runApp(const FoodMater());
+  runApp(const NewsMater());
 }
-class FoodMater extends StatelessWidget {
-  const FoodMater({Key? key}) : super(key: key);
+class NewsMater extends StatelessWidget {
+  const NewsMater({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
